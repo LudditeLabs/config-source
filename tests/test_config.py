@@ -167,7 +167,3 @@ class TestConfig(object):
 
         with pytest.raises(IOError):
             config.load_from('pyfile', filename)
-
-    def test_from(self):
-        config = Config()
-        config.load_from('s3')
