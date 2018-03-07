@@ -1,0 +1,8 @@
+# Check guides at https://confluence.atlassian.com/x/x4UWN for more examples.
+image: ludditelabs/multipy
+
+pipelines:
+  default:
+    - step:
+        script:
+          - tox
