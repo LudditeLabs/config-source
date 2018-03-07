@@ -1,6 +1,4 @@
-from __future__ import absolute_import, division
-# future package
-from builtins import dict
+from __future__ import absolute_import
 try:
     from unittest.mock import patch, Mock, call
 except ImportError:
