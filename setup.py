@@ -1,6 +1,6 @@
 import sys
 import os.path as op
-from setuptools import setup, find_packages
+from setuptools import setup
 
 PY2 = sys.version_info[0] == 2
 
@@ -29,11 +29,8 @@ setup(
     long_description=read('README.rst'),
     author='Sergey Kozlov',
     author_email='sergey.kozlov@ludditelabs.io',
-    packages=find_packages(exclude=['tests']),
-    package_dir={'configsource': 'configsource'},
-    install_requires=[
-        'future>=0.16.0',
-    ],
+    py_modules=['configsource'],
+    install_requires=['future>=0.16.0'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         # TODO: set license.
