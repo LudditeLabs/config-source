@@ -76,6 +76,7 @@ class TestConfigSource(object):
         assert 'env' in default
         assert 'object' in default
         assert 'pyfile' in default
+        assert 'json' in default
 
 
 # Test: merge_kwargs() function.
@@ -253,17 +254,18 @@ class TestDictConfig(object):
 
         assert config == dict(MYTEST_ONE='12', MYTEST_TWO='hello')
 
-    # Test: load settings from a file.
+    # Test: load settings from a python file.
     def test_from_pyfile(self, tmpdir):
         myconfig = tmpdir.join('myconfig.py')
-        myconfig.write('ONE = 1\nTWO = "hello"')
+        myconfig.write('ONE = 1\nTWO = "hello"\nthree = 3')
 
         config = DictConfig()
         config.load_from('pyfile', str(myconfig))
 
+        # three won't load because it's lowercase.
         assert config == dict(ONE=1, TWO='hello')
 
-    # Test: load settings from a missing file, silent mode.
+    # Test: load settings from a missing python file, silent mode.
     def test_from_pyfile_missing_silent(self, tmpdir):
         filename = str(tmpdir.join('myconfig.py'))
         config = DictConfig()
@@ -278,3 +280,30 @@ class TestDictConfig(object):
 
         with pytest.raises(IOError):
             config.load_from('pyfile', filename)
+
+    # Test: load settings from a json file.
+    def test_from_json(self, tmpdir):
+        myconfig = tmpdir.join('myconfig.json')
+        myconfig.write('{"ONE": 1, "TWO": "hello", "three": 3}')
+
+        config = DictConfig()
+        config.load_from('json', str(myconfig))
+
+        # three won't load because it's lowercase.
+        assert config == dict(ONE=1, TWO='hello')
+
+    # Test: load settings from a missing json file, silent mode.
+    def test_from_json_missing_silent(self, tmpdir):
+        filename = str(tmpdir.join('myconfig.json'))
+        config = DictConfig()
+        config.load_from('json', filename, silent=True)
+
+        assert config == dict()
+
+    # Test: load settings from a missing file, not silent mode.
+    def test_from_json_missing_nosilent(self, tmpdir):
+        filename = str(tmpdir.join('myconfig.json'))
+        config = DictConfig()
+
+        with pytest.raises(IOError):
+            config.load_from('json', filename)

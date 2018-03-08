@@ -5,6 +5,7 @@ from types import ModuleType
 from future.moves.collections import UserDict
 from future.utils import PY2, iteritems
 import pkg_resources
+import json
 from collections import defaultdict
 
 __version__ = '0.0.2'
@@ -244,6 +245,31 @@ def load_from_pyfile(config, filename, silent=False):
     with open(filename, mode='rb') as config_file:
         exec(compile(config_file.read(), filename, 'exec'), d.__dict__)
     return config.load_from('object', d)
+
+
+@config_source('json')
+def load_from_json(config, filename, silent=False):
+    """Update ``config`` with values from the given JSON file.
+
+    Args:
+        config: Dict-like config.
+        filename: JSON filename.
+        silent: Don't raise an error on missing files.
+
+    Returns:
+        ``True`` if at least one variable from the file is loaded.
+    """
+    d = ModuleType('config')
+    d.__file__ = filename
+
+    if not op.exists(filename):
+        if not silent:
+            raise IOError('File is not found: %s' % filename)
+        return False
+
+    with open(filename) as f:
+        d = json.load(f)
+    return config.load_from('dict', d)
 
 
 # -- Configuration sources from plugins.
