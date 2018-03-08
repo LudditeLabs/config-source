@@ -5,22 +5,42 @@ except ImportError:
     from mock import patch, Mock, call
 import pytest
 import configsource
-from configsource import config_source, Config
+from configsource import (
+    config_source,
+    load_to,
+    merge_kwargs,
+    ConfigSourceError,
+    DictConfig
+)
 
 
 # Test: config_source() decorator.
 class TestConfigSource(object):
-    # Test: register new config sources.
-    def test_register(self):
+    # Test: register new config sources for default config type (dict).
+    def test_register_default(self):
         x = lambda x: None
         y = lambda x: None
 
         with patch.dict('configsource._config_sources', clear=True):
             config_source('one')(x)
-            assert configsource._config_sources == dict(one=x)
+            assert configsource._config_sources == {'dict': {'one': x}}
 
             config_source('two')(y)
-            assert configsource._config_sources == dict(one=x, two=y)
+            assert configsource._config_sources == {'dict': {'one': x,
+                                                             'two': y}}
+
+    # Test: register new config sources for various config types.
+    def test_register(self):
+        x = lambda x: None
+        y = lambda x: None
+
+        with patch.dict('configsource._config_sources', clear=True):
+            config_source('one', 'xx')(x)
+            assert configsource._config_sources == {'xx': {'one': x}}
+
+            config_source('two', 'yy')(y)
+            assert configsource._config_sources == {'xx': {'one': x},
+                                                    'yy': {'two': y}}
 
     # Test: register already registered source.
     def test_register_error(self):
@@ -29,81 +49,160 @@ class TestConfigSource(object):
 
         with patch.dict('configsource._config_sources', clear=True):
             config_source('one')(x)
-            assert configsource._config_sources == dict(one=x)
+            assert configsource._config_sources == {'dict': {'one': x}}
 
             with pytest.raises(AssertionError) as e:
                 config_source('one')(y)
 
             assert str(e.value) == 'Already registered: one'
 
+    # Test: override already registered source.
+    def test_register_override(self):
+        x = lambda x: None
+        y = lambda x: None
+
+        with patch.dict('configsource._config_sources', clear=True):
+            config_source('one')(x)
+            assert configsource._config_sources == {'dict': {'one': x}}
+
+            config_source('one', force=True)(y)
+            assert configsource._config_sources == {'dict': {'one': y}}
+
     # Test: already registered sources
     def test_registered(self):
-        assert 'env' in configsource._config_sources
-        assert 'object' in configsource._config_sources
-        assert 'pyfile' in configsource._config_sources
+        default = configsource._config_sources.get('dict')
+        assert default is not None
+        assert 'env' in default
+        assert 'object' in default
+        assert 'pyfile' in default
 
 
-class TestConfig(object):
-    # Test: construction without any args.
+# Test: merge_kwargs() function.
+class TestMergeKwargs(object):
+    # Test: Merge with None defaults.
+    def test_none(self):
+        kw = merge_kwargs(dict(a=1, b=2), None)
+        assert kw == dict(a=1, b=2)
+
+    # Test: Normal merge.
+    def test_norm(self):
+        kw = merge_kwargs(dict(a=1, b=2), dict(c=3, d=4))
+        assert kw == dict(a=1, b=2, c=3, d=4)
+
+    # Test: Merge with override defaults.
+    def test_override(self):
+        # 'a' will be overridden.
+        kw = merge_kwargs(dict(a=1, b=2), dict(a=3, d=4))
+        assert kw == dict(a=1, b=2, d=4)
+
+
+# Test: load_to() function.
+class TestLoadTo(object):
+    # Test: load to unknown config type.
+    def test_unknown_type(self):
+        with patch.dict('configsource._config_sources', clear=True):
+            with pytest.raises(ConfigSourceError) as e:
+                load_to({}, 'env', config_type='bla')
+            assert str(e.value) == 'Unknown config type: bla'
+
+    # Test: load from unknown source.
+    def test_unknown_src(self):
+        with patch.dict('configsource._config_sources', clear=True):
+            configsource._config_sources['bla'] = dict()
+            with pytest.raises(ConfigSourceError) as e:
+                load_to({}, 'env', 'bla')
+            assert str(e.value) == 'Unknown source: env (config type: bla)'
+
+    # Test: call mocked loader.
+    def test_mock_loader(self):
+        loader = Mock(return_value=123)
+        config = dict()
+        with patch.dict('configsource._config_sources', clear=True):
+            config_source('test_source')(loader)
+            res = load_to(config, 'test_source', 'dict', 1, a=2)
+
+            assert res == 123
+            assert loader.mock_calls == [call(config, 1, a=2)]
+
+    # Test: call real loader.
+    # Exmaple of non-dict config.
+    def test_loader(self):
+        def load_to_list(config, val=1):
+            config.append(val)
+            return True
+
+        config = []
+        with patch.dict('configsource._config_sources', clear=True):
+            config_source('value', 'list')(load_to_list)
+            res = load_to(config, 'value', 'list')
+            assert res is True
+            assert config == [1]
+
+            res = load_to(config, 'value', 'list', val=123)
+            assert res is True
+            assert config == [1, 123]
+
+
+class TestDictConfig(object):
+    # Test: construction without args.
     def test_construct(self):
-        config = Config()
+        config = DictConfig()
 
         assert config == dict()
         assert config.data == dict()
-        assert config._source_args == dict()
+        assert config._defaults == dict()
 
-    # Test: construct with source args
+    # Test: construct with defaults.
     def test_construct_args(self):
-        config = Config(source_args=dict(one=1, two=2))
+        config = DictConfig(defaults=dict(one=1, two=2))
 
         assert config == dict()
         assert config.data == dict()
-        assert config._source_args == dict(one=1, two=2)
+        assert config._defaults == dict(one=1, two=2)
 
     # Test: try load unknown config source.
     def test_load_from_unknown(self):
-        config = Config()
-
-        with pytest.raises(configsource.UnknownConfigError) as e:
-            config.load_from('bla')
-        assert str(e.value) == 'Unknown config source: bla'
+        config = DictConfig()
+        with pytest.raises(ConfigSourceError) as e:
+            config.load_from('test_env')
+        assert str(e.value) == 'Unknown source: test_env (config type: dict)'
 
     # Test: Call config loader without args.
-    @patch.dict('configsource._config_sources')
+    @patch.dict('configsource._config_sources', clear=True)
     def test_load_from_noargs(self):
         mock = Mock()
         config_source('my')(mock)
 
-        config = Config()
+        config = DictConfig()
         config.load_from('my')
 
         assert mock.mock_calls == [call(config)]
 
     # Test: Call config loader with args.
-    @patch.dict('configsource._config_sources')
+    @patch.dict('configsource._config_sources', clear=True)
     def test_load_from_args(self):
         mock = Mock()
         config_source('my')(mock)
 
-        config = Config()
+        config = DictConfig()
         config.load_from('my', 1, 2, k=3, w=4)
 
         assert mock.mock_calls == [call(config, 1, 2, k=3, w=4)]
 
     # Test: Call config loader with extra args.
-    @patch.dict('configsource._config_sources')
+    @patch.dict('configsource._config_sources', clear=True)
     def test_load_from_args_extra(self):
         mock = Mock()
         config_source('my')(mock)
 
-        config = Config(source_args={'my': dict(x='y')})
+        config = DictConfig(defaults={'my': dict(x='y')})
         config.load_from('my', 1, k=3)
 
         # It must add extra args from source_args.
         assert mock.mock_calls == [call(config, 1, k=3, x='y')]
 
         # 'source_args' must stay unchanged.
-        assert config._source_args == {'my': dict(x='y')}
+        assert config._defaults == {'my': dict(x='y')}
 
     # Test: load settings from object.
     def test_from_object(self):
@@ -112,14 +211,14 @@ class TestConfig(object):
             PARAM_2 = '2'
             lower_param = dict()  # lowercase won't load.
 
-        config = Config()
+        config = DictConfig()
         config.load_from('object', Cfg)
 
         assert config == dict(PARAM1=1, PARAM_2='2')
 
     # Test: load settings from runtime env, without prefixed vars.
     def test_from_env_empty(self):
-        config = Config()
+        config = DictConfig()
         config.load_from('env', prefix='MYTEST')
 
         assert config == dict()
@@ -127,7 +226,7 @@ class TestConfig(object):
     # Test: load settings from runtime env.
     @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
     def test_from_env(self):
-        config = Config()
+        config = DictConfig()
         config.load_from('env', prefix='MYTEST')
 
         assert config == dict(ONE='12', TWO='hello')
@@ -135,7 +234,7 @@ class TestConfig(object):
     # Test: load settings from runtime env, don't trim prefix.
     @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
     def test_from_env_notrim(self):
-        config = Config()
+        config = DictConfig()
         config.load_from('env', prefix='MYTEST', trim_prefix=False)
 
         assert config == dict(MYTEST_ONE='12', MYTEST_TWO='hello')
@@ -145,7 +244,7 @@ class TestConfig(object):
         myconfig = tmpdir.join('myconfig.py')
         myconfig.write('ONE = 1\nTWO = "hello"')
 
-        config = Config()
+        config = DictConfig()
         config.load_from('pyfile', str(myconfig))
 
         assert config == dict(ONE=1, TWO='hello')
@@ -153,7 +252,7 @@ class TestConfig(object):
     # Test: load settings from a missing file, silent mode.
     def test_from_pyfile_missing_silent(self, tmpdir):
         filename = str(tmpdir.join('myconfig.py'))
-        config = Config()
+        config = DictConfig()
         config.load_from('pyfile', filename, silent=True)
 
         assert config == dict()
@@ -161,7 +260,7 @@ class TestConfig(object):
     # Test: load settings from a missing file, not silent mode.
     def test_from_pyfile_missing_nosilent(self, tmpdir):
         filename = str(tmpdir.join('myconfig.py'))
-        config = Config()
+        config = DictConfig()
 
         with pytest.raises(IOError):
             config.load_from('pyfile', filename)
