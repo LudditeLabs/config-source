@@ -6,7 +6,7 @@ PY2 = sys.version_info[0] == 2
 
 
 def get_version():
-    with open('configsource/__init__.py') as f:
+    with open('configsource.py') as f:
         for line in f:
             if line.startswith('__version__'):
                 return eval(line.split('=')[-1])
