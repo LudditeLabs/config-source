@@ -6,7 +6,7 @@ from future.moves.collections import UserDict
 from future.utils import PY2, iteritems
 import pkg_resources
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 _config_sources = dict()
 
