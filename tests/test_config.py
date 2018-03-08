@@ -72,6 +72,7 @@ class TestConfigSource(object):
     def test_registered(self):
         default = configsource._config_sources.get('dict')
         assert default is not None
+        assert 'dict' in default
         assert 'env' in default
         assert 'object' in default
         assert 'pyfile' in default
@@ -213,6 +214,19 @@ class TestDictConfig(object):
 
         config = DictConfig()
         config.load_from('object', Cfg)
+
+        assert config == dict(PARAM1=1, PARAM_2='2')
+
+    # Test: load settings from dict.
+    def test_from_dict(self):
+        src = dict(
+            PARAM1=1,
+            PARAM_2='2',
+            lower_param=None  # lowercase won't load.
+        )
+
+        config = DictConfig()
+        config.load_from('dict', src)
 
         assert config == dict(PARAM1=1, PARAM_2='2')
 

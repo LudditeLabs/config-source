@@ -174,6 +174,27 @@ def load_from_object(config, obj):
     return has
 
 
+@config_source('dict')
+def load_from_dict(config, obj):
+    """Update ``config`` with values from the given dict-like object.
+
+    Only uppercase keys will be loaded into ``config``.
+
+    Args:
+        config: Dict-like config.
+        obj: Dict-like object.
+
+    Returns:
+        ``True`` if at least one key is loaded to ``config``.
+    """
+    has = False
+    for key, val in iteritems(obj):
+        if key.isupper():
+            has = True
+            config[key] = val
+    return has
+
+
 @config_source('env')
 def load_from_env(config, prefix, trim_prefix=True):
     """Update ``config`` with values from current environment.
