@@ -127,7 +127,7 @@ class TestLoadTo(object):
             assert loader.mock_calls == [call(config, 1, a=2)]
 
     # Test: call real loader.
-    # Exmaple of non-dict config.
+    # Example of non-dict config.
     def test_loader(self):
         def load_to_list(config, val=1):
             config.append(val)
