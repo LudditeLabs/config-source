@@ -244,7 +244,8 @@ def load_from_pyfile(config, filename, silent=False):
 
     with open(filename, mode='rb') as config_file:
         exec(compile(config_file.read(), filename, 'exec'), d.__dict__)
-    return config.load_from('object', d)
+
+    return load_to(config, 'object', 'dict', d)
 
 
 @config_source('json')
@@ -259,9 +260,6 @@ def load_from_json(config, filename, silent=False):
     Returns:
         ``True`` if at least one variable from the file is loaded.
     """
-    d = ModuleType('config')
-    d.__file__ = filename
-
     if not op.exists(filename):
         if not silent:
             raise IOError('File is not found: %s' % filename)
@@ -269,7 +267,8 @@ def load_from_json(config, filename, silent=False):
 
     with open(filename) as f:
         d = json.load(f)
-    return config.load_from('dict', d)
+
+    return load_to(config, 'dict', 'dict', d)
 
 
 # -- Configuration sources from plugins.
