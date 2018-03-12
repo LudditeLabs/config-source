@@ -145,6 +145,133 @@ class TestLoadTo(object):
             assert config == [1, 123]
 
 
+# Test: load sources for dict-like config.
+class TestDictSources(object):
+    # Test: load settings from object.
+    def test_from_object(self):
+        class Cfg:
+            PARAM1 = 1
+            PARAM_2 = '2'
+            lower_param = dict()  # lowercase won't load.
+
+        config = dict()
+        res = load_to(config, 'object', 'dict', Cfg)
+
+        assert res is True
+        assert config == dict(PARAM1=1, PARAM_2='2')
+
+    # Test: load settings from object without uppercase attrs.
+    def test_from_object_no_attrs(self):
+        class Cfg:
+            param1 = 1
+            param_2 = '2'
+            lower_param = dict()
+
+        config = dict()
+        res = load_to(config, 'object', 'dict', Cfg)
+
+        assert res is False
+        assert config == dict()
+
+    # Test: load settings from dict.
+    def test_from_dict(self):
+        src = dict(
+            PARAM1=1,
+            PARAM_2='2',
+            lower_param=None  # lowercase won't load.
+        )
+
+        config = dict(X='x')
+        res = load_to(config, 'dict', 'dict', src)
+
+        assert res is True
+        assert config == dict(X='x', PARAM1=1, PARAM_2='2')
+
+    # Test: load settings from runtime env, without prefixed vars.
+    def test_from_env_empty(self):
+        config = dict()
+        res = load_to(config, 'env', 'dict', prefix='MYTEST')
+
+        assert res is False
+        assert config == dict()
+
+    # Test: load settings from runtime env.
+    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
+    def test_from_env(self):
+        config = dict()
+        res = load_to(config, 'env', 'dict', prefix='MYTEST')
+
+        assert res is True
+        assert config == dict(ONE='12', TWO='hello')
+
+    # Test: load settings from runtime env, don't trim prefix.
+    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
+    def test_from_env_notrim(self):
+        config = dict()
+        load_to(config, 'env', 'dict', prefix='MYTEST', trim_prefix=False)
+
+        assert config == dict(MYTEST_ONE='12', MYTEST_TWO='hello')
+
+    # Test: load settings from a python file.
+    def test_from_pyfile(self, tmpdir):
+        myconfig = tmpdir.join('myconfig.py')
+        myconfig.write('ONE = 1\nTWO = "hello"\nthree = 3')
+
+        config = dict()
+        res = load_to(config, 'pyfile', 'dict', str(myconfig))
+
+        assert res is True
+        # three won't load because it's lowercase.
+        assert config == dict(ONE=1, TWO='hello')
+
+    # Test: load settings from a missing python file, silent mode.
+    def test_from_pyfile_missing_silent(self, tmpdir):
+        filename = str(tmpdir.join('myconfig.py'))
+        config = DictConfig()
+        res = config.load_from('pyfile', filename, silent=True)
+
+        assert res is False
+        assert config == dict()
+
+    # Test: load settings from a missing file, not silent mode.
+    def test_from_pyfile_missing_nosilent(self, tmpdir):
+        filename = str(tmpdir.join('myconfig.py'))
+        config = DictConfig()
+
+        with pytest.raises(IOError):
+            config.load_from('pyfile', filename)
+
+    # Test: load settings from a json file.
+    def test_from_json(self, tmpdir):
+        myconfig = tmpdir.join('myconfig.json')
+        myconfig.write('{"ONE": 1, "TWO": "hello", "three": 3}')
+
+        config = DictConfig()
+        res = config.load_from('json', str(myconfig))
+
+        assert res is True
+        # three won't load because it's lowercase.
+        assert config == dict(ONE=1, TWO='hello')
+
+    # Test: load settings from a missing json file, silent mode.
+    def test_from_json_missing_silent(self, tmpdir):
+        filename = str(tmpdir.join('myconfig.json'))
+        config = DictConfig()
+        res = config.load_from('json', filename, silent=True)
+
+        assert res is False
+        assert config == dict()
+
+    # Test: load settings from a missing file, not silent mode.
+    def test_from_json_missing_nosilent(self, tmpdir):
+        filename = str(tmpdir.join('myconfig.json'))
+        config = DictConfig()
+
+        with pytest.raises(IOError):
+            config.load_from('json', filename)
+
+
+# Test: DictConfig class.
 class TestDictConfig(object):
     # Test: construction without args.
     def test_construct(self):
@@ -231,13 +358,6 @@ class TestDictConfig(object):
 
         assert config == dict(PARAM1=1, PARAM_2='2')
 
-    # Test: load settings from runtime env, without prefixed vars.
-    def test_from_env_empty(self):
-        config = DictConfig()
-        config.load_from('env', prefix='MYTEST')
-
-        assert config == dict()
-
     # Test: load settings from runtime env.
     @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
     def test_from_env(self):
@@ -245,14 +365,6 @@ class TestDictConfig(object):
         config.load_from('env', prefix='MYTEST')
 
         assert config == dict(ONE='12', TWO='hello')
-
-    # Test: load settings from runtime env, don't trim prefix.
-    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
-    def test_from_env_notrim(self):
-        config = DictConfig()
-        config.load_from('env', prefix='MYTEST', trim_prefix=False)
-
-        assert config == dict(MYTEST_ONE='12', MYTEST_TWO='hello')
 
     # Test: load settings from a python file.
     def test_from_pyfile(self, tmpdir):
@@ -265,22 +377,6 @@ class TestDictConfig(object):
         # three won't load because it's lowercase.
         assert config == dict(ONE=1, TWO='hello')
 
-    # Test: load settings from a missing python file, silent mode.
-    def test_from_pyfile_missing_silent(self, tmpdir):
-        filename = str(tmpdir.join('myconfig.py'))
-        config = DictConfig()
-        config.load_from('pyfile', filename, silent=True)
-
-        assert config == dict()
-
-    # Test: load settings from a missing file, not silent mode.
-    def test_from_pyfile_missing_nosilent(self, tmpdir):
-        filename = str(tmpdir.join('myconfig.py'))
-        config = DictConfig()
-
-        with pytest.raises(IOError):
-            config.load_from('pyfile', filename)
-
     # Test: load settings from a json file.
     def test_from_json(self, tmpdir):
         myconfig = tmpdir.join('myconfig.json')
@@ -291,19 +387,3 @@ class TestDictConfig(object):
 
         # three won't load because it's lowercase.
         assert config == dict(ONE=1, TWO='hello')
-
-    # Test: load settings from a missing json file, silent mode.
-    def test_from_json_missing_silent(self, tmpdir):
-        filename = str(tmpdir.join('myconfig.json'))
-        config = DictConfig()
-        config.load_from('json', filename, silent=True)
-
-        assert config == dict()
-
-    # Test: load settings from a missing file, not silent mode.
-    def test_from_json_missing_nosilent(self, tmpdir):
-        filename = str(tmpdir.join('myconfig.json'))
-        config = DictConfig()
-
-        with pytest.raises(IOError):
-            config.load_from('json', filename)
