@@ -4,6 +4,7 @@ try:
 except ImportError:
     from mock import patch, Mock, call
 import pytest
+from io import StringIO
 import configsource
 from configsource import (
     config_source,
@@ -211,6 +212,17 @@ class TestDictSources(object):
         load_to(config, 'env', 'dict', prefix='MYTEST', trim_prefix=False)
 
         assert config == dict(MYTEST_ONE='12', MYTEST_TWO='hello')
+
+    # Test: load settings from a python file-like object.
+    def test_from_pyfile_obj(self):
+        source = StringIO(u'ONE = 1\nTWO = "hello"\nthree = 3')
+
+        config = dict()
+        res = load_to(config, 'pyfile', 'dict', source)
+
+        assert res is True
+        # three won't load because it's lowercase.
+        assert config == dict(ONE=1, TWO='hello')
 
     # Test: load settings from a python file.
     def test_from_pyfile(self, tmpdir):

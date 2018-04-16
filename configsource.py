@@ -223,27 +223,35 @@ def load_from_env(config, prefix, trim_prefix=True):
 
 
 @config_source('pyfile')
-def load_from_pyfile(config, filename, silent=False):
-    """Update ``config`` with values from the given python file.
+def load_from_pyfile(config, source, silent=False):
+    """Update ``config`` with values from the given python file or file-like
+    object.
 
     Args:
         config: Dict-like config.
-        filename: Python filename.
+        source: Python filename or file-like object.
         silent: Don't raise an error on missing files.
 
     Returns:
         ``True`` if at least one variable from the file is loaded.
     """
+    is_obj = hasattr(source, 'read')
+
     d = ModuleType('config')
-    d.__file__ = filename
 
-    if not op.exists(filename):
-        if not silent:
-            raise IOError('File is not found: %s' % filename)
-        return False
+    if is_obj:
+        d.__file__ = 'config'
+        exec(compile(source.read(), 'config', 'exec'), d.__dict__)
+    else:
+        d.__file__ = source
 
-    with open(filename, mode='rb') as config_file:
-        exec(compile(config_file.read(), filename, 'exec'), d.__dict__)
+        if not op.exists(source):
+            if not silent:
+                raise IOError('File is not found: %s' % source)
+            return False
+
+        with open(source, mode='rb') as config_file:
+            exec(compile(config_file.read(), source, 'exec'), d.__dict__)
 
     return load_to(config, 'object', 'dict', d)
 
