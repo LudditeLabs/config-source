@@ -7,8 +7,10 @@ import pytest
 from io import StringIO
 import configsource
 from configsource import (
+    _config_sources,
     config_source,
     load_to,
+    load_multiple_to,
     merge_kwargs,
     ConfigSourceError,
     DictConfig
@@ -144,6 +146,93 @@ class TestLoadTo(object):
             res = load_to(config, 'value', 'list', val=123)
             assert res is True
             assert config == [1, 123]
+
+
+# Test: load_multiple_to() function.
+class TestLoadMultipleTo(object):
+    # Test: pass empty list.
+    def test_empty(self):
+        config = {}
+        ok = load_multiple_to(config, [])
+        assert not ok
+        assert config == {}
+
+    # Test: load from multiple sources when loaders returns True.
+    def test_ok(self):
+        _config_sources['dict'].pop('src1', None)
+        _config_sources['dict'].pop('src2', None)
+        config = {}
+
+        @config_source('src1')
+        def loader_1(config, param=None):
+            config['src1'] = param
+            return True
+
+        @config_source('src2')
+        def loader_2(config, param=None):
+            config['src2'] = param
+            return True
+
+        ok = load_multiple_to(config, [
+            {'from': 'src1'},
+            {'from': 'src2', 'param': 'xxx'}
+        ])
+
+        assert ok
+        assert config == dict(src1=None, src2='xxx')
+
+    # Test: load from multiple sources when a loader returns False.
+    def test_not_ok(self):
+        _config_sources['dict'].pop('src1', None)
+        _config_sources['dict'].pop('src2', None)
+        config = {}
+
+        @config_source('src1')
+        def loader_1(config, param=None):
+            config['src1'] = param
+            return True
+
+        @config_source('src2')
+        def loader_2(config, param=None):
+            return False
+
+        ok = load_multiple_to(config, [
+            {'from': 'src1'},
+            {'from': 'src2', 'param': 'xxx'}
+        ])
+
+        assert not ok
+        assert config == dict(src1=None)
+
+    # Test: specify source type.
+    def test_type(self):
+        _config_sources['dict'].pop('src1', None)
+        _config_sources['dict'].pop('src2', None)
+        config = {}
+
+        @config_source('src1')
+        def loader_1(config, param=None):
+            config['src1'] = param
+            return True
+
+        @config_source('src2')
+        def loader_2(config, param=None):
+            config['src2'] = param
+            return True
+
+        @config_source('src2', 'xxx')
+        def loader_2(config, param=None):
+            config['src2_xxx'] = param
+            return True
+
+        ok = load_multiple_to(config, [
+            {'from': 'src1'},
+            {'from': 'src2', 'type': 'xxx'}
+        ])
+
+        # NOTE: src2_xxx must be there instead of src2. Because we set a type.
+        assert config == dict(src1=None, src2_xxx=None)
+        assert ok
 
 
 # Test: load sources for dict-like config.

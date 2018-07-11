@@ -81,6 +81,48 @@ def load_to(config, from_source, config_type, *args, **kwargs):
     return loader(config, *args, **kwargs)
 
 
+def load_multiple_to(config, sources):
+    """Load configuration from multiple sources to ``config``.
+
+    Loader parameters::
+
+        {
+            'from': '<source name>',
+            'type': '<optional config type>',  # 'dict' by default.
+            ... <source loader params>
+        }
+
+    Example::
+
+        config = {}
+        load_multiple_to(config, [
+            {'from': 'pyfile', 'filename': '~/.myconfig', 'silent': True},
+            {'from': 'env', 'prefix': 'MYCFG'}
+        ])
+
+    Args:
+        config: Destination configuration object.
+        sources: List of dicts with loaders' parameters.
+
+    Returns:
+        ``True`` if configuration is successfully loaded from the source
+        and ``False`` otherwise.
+
+    Raises:
+        ConfigError: if config type or source is not found.
+
+    See Also:
+        :func:`load_to`.
+    """
+    ok = len(sources) != 0
+    for params in sources:
+        src_name = params.pop('from')
+        config_type = params.pop('type', 'dict')
+        if not load_to(config, src_name, config_type, **params):
+            ok = False
+    return ok
+
+
 def merge_kwargs(kwargs, defaults):
     """Helper function to merge ``kwargs`` into ``defaults``.
 
