@@ -218,7 +218,7 @@ def load_from_object(config, obj):
 
 
 @config_source('dict')
-def load_from_dict(config, obj):
+def load_from_dict(config, obj, skip_none=False):
     """Update ``config`` with values from the given dict-like object.
 
     Only uppercase keys will be loaded into ``config``.
@@ -226,13 +226,14 @@ def load_from_dict(config, obj):
     Args:
         config: Dict-like config.
         obj: Dict-like object.
+        skip_none: Skip configs with ``None`` values.
 
     Returns:
         ``True`` if at least one key is loaded to ``config``.
     """
     has = False
     for key, val in iteritems(obj):
-        if key.isupper():
+        if key.isupper() and (not skip_none or val is not None):
             has = True
             config[key] = val
     return has

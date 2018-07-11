@@ -268,6 +268,7 @@ class TestDictSources(object):
         src = dict(
             PARAM1=1,
             PARAM_2='2',
+            PARAM_3=None,
             lower_param=None  # lowercase won't load.
         )
 
@@ -275,7 +276,22 @@ class TestDictSources(object):
         res = load_to(config, 'dict', 'dict', src)
 
         assert res is True
-        assert config == dict(X='x', PARAM1=1, PARAM_2='2')
+        assert config == dict(X='x', PARAM1=1, PARAM_2='2', PARAM_3=None)
+
+    # Test: load settings from dict, skip None values.
+    def test_from_dict_skip_none(self):
+        src = dict(
+            PARAM1=1,
+            PARAM_2=None,
+            Y=None
+        )
+
+        config = dict(X='x', Y='y')
+        res = load_to(config, 'dict', 'dict', src, skip_none=True)
+
+        # NOTE: Y stays the same; PARAM_2 is not loaded.
+        assert res is True
+        assert config == dict(X='x', PARAM1=1, Y='y')
 
     # Test: load settings from runtime env, without prefixed vars.
     def test_from_env_empty(self):
