@@ -96,7 +96,7 @@ def load_multiple_to(config, sources):
 
         config = {}
         load_multiple_to(config, [
-            {'from': 'pyfile', 'filename': '~/.myconfig', 'silent': True},
+            {'from': 'pyfile', 'source': '~/.myconfig', 'silent': True},
             {'from': 'env', 'prefix': 'MYCFG'}
         ])
 
