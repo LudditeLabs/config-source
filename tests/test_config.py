@@ -19,8 +19,8 @@ except ImportError:
     from mock import patch, Mock, call
 import pytest
 from io import StringIO
-import configsource
-from configsource import (
+import config_source as configsource
+from config_source import (
     _config_sources,
     config_source,
     load_to,
@@ -38,7 +38,7 @@ class TestConfigSource(object):
         x = lambda x: None
         y = lambda x: None
 
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             config_source('one')(x)
             assert configsource._config_sources == {'dict': {'one': x}}
 
@@ -51,7 +51,7 @@ class TestConfigSource(object):
         x = lambda x: None
         y = lambda x: None
 
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             config_source('one', 'xx')(x)
             assert configsource._config_sources == {'xx': {'one': x}}
 
@@ -64,7 +64,7 @@ class TestConfigSource(object):
         x = lambda x: None
         y = lambda x: None
 
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             config_source('one')(x)
             assert configsource._config_sources == {'dict': {'one': x}}
 
@@ -78,7 +78,7 @@ class TestConfigSource(object):
         x = lambda x: None
         y = lambda x: None
 
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             config_source('one')(x)
             assert configsource._config_sources == {'dict': {'one': x}}
 
@@ -119,14 +119,14 @@ class TestMergeKwargs(object):
 class TestLoadTo(object):
     # Test: load to unknown config type.
     def test_unknown_type(self):
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             with pytest.raises(ConfigSourceError) as e:
                 load_to({}, 'env', config_type='bla')
             assert str(e.value) == 'Unknown config type: bla'
 
     # Test: load from unknown source.
     def test_unknown_src(self):
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             configsource._config_sources['bla'] = dict()
             with pytest.raises(ConfigSourceError) as e:
                 load_to({}, 'env', 'bla')
@@ -136,7 +136,7 @@ class TestLoadTo(object):
     def test_mock_loader(self):
         loader = Mock(return_value=123)
         config = dict()
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             config_source('test_source')(loader)
             res = load_to(config, 'test_source', 'dict', 1, a=2)
 
@@ -151,7 +151,7 @@ class TestLoadTo(object):
             return True
 
         config = []
-        with patch.dict('configsource._config_sources', clear=True):
+        with patch.dict('config_source._config_sources', clear=True):
             config_source('value', 'list')(load_to_list)
             res = load_to(config, 'value', 'list')
             assert res is True
@@ -428,7 +428,7 @@ class TestDictConfig(object):
         assert str(e.value) == 'Unknown source: test_env (config type: dict)'
 
     # Test: Call config loader without args.
-    @patch.dict('configsource._config_sources', clear=True)
+    @patch.dict('config_source._config_sources', clear=True)
     def test_load_from_noargs(self):
         mock = Mock()
         config_source('my')(mock)
@@ -439,7 +439,7 @@ class TestDictConfig(object):
         assert mock.mock_calls == [call(config)]
 
     # Test: Call config loader with args.
-    @patch.dict('configsource._config_sources', clear=True)
+    @patch.dict('config_source._config_sources', clear=True)
     def test_load_from_args(self):
         mock = Mock()
         config_source('my')(mock)
@@ -450,7 +450,7 @@ class TestDictConfig(object):
         assert mock.mock_calls == [call(config, 1, 2, k=3, w=4)]
 
     # Test: Call config loader with extra args.
-    @patch.dict('configsource._config_sources', clear=True)
+    @patch.dict('config_source._config_sources', clear=True)
     def test_load_from_args_extra(self):
         mock = Mock()
         config_source('my')(mock)

@@ -1,8 +1,8 @@
-configsource
-============
+config_source
+=============
 
-.. image:: https://travis-ci.org/LudditeLabs/configsource.svg?branch=master
-   :target: https://travis-ci.org/LudditeLabs/configsource
+.. image:: https://travis-ci.org/LudditeLabs/config_source.svg?branch=master
+   :target: https://travis-ci.org/LudditeLabs/config_source
 
 This package provides extensible configuration loading from various sources.
 
@@ -18,15 +18,13 @@ Features:
 
 * Custom configuration sources and objects.
 
-* Python 2.7 and 3.X support.
-
-Basically ``configsource`` provides a way to register configuration loaders and
+Basically ``config_source`` provides a way to register configuration loaders and
 call them by names. The loader accepts optional arguments, reads configuration
 from a specific source and populates a configuration object.
 
 Example::
 
-    from configsource import DictConfig
+    from config_source import DictConfig
 
     config = DictConfig()
     config.load_from('pyfile', '/path/to/config.py')
@@ -145,7 +143,7 @@ Add source
 ``config_source`` decorator is used to register additional configuration
 sources::
 
-    from configsource import config_source
+    from config_source import config_source
 
     @config_source('source_name')
     def myloader(config, arg1, arg2):
@@ -161,7 +159,7 @@ a package with entry point::
 
     setup(
         ...
-        entry_points={'configsource.sources': '<source> = <package name>'},
+        entry_points={'config_source.sources': '<source> = <package name>'},
         ...
     )
 
@@ -223,7 +221,7 @@ where ``config`` is object implementing ``mytype`` interface.
 
 ``list`` configuration example::
 
-    from configsource import config_source, load_to
+    from config_source import config_source, load_to
 
 
     @config_source('object', config_type='list')

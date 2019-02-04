@@ -20,7 +20,7 @@ PY2 = sys.version_info[0] == 2
 
 
 def get_version():
-    with open('configsource.py') as f:
+    with open('config_source.py') as f:
         for line in f:
             if line.startswith('__version__'):
                 return eval(line.split('=')[-1])
@@ -37,13 +37,13 @@ if PY2:
 
 
 setup(
-    name='configsource',
+    name='config_source',
     version=get_version(),
     description='Simple configurations management for applications.',
     long_description=read('README.rst'),
     author='Sergey Kozlov',
     author_email='dev@ludditelabs.io',
-    py_modules=['configsource'],
+    py_modules=['config_source'],
     install_requires=['future>=0.16.0'],
     classifiers=[
         'Development Status :: 4 - Beta',

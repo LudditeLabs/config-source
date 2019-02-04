@@ -338,5 +338,5 @@ def load_from_json(config, filename, silent=False):
 
 # -- Configuration sources from plugins.
 
-for entry_point in pkg_resources.iter_entry_points('configsource.sources'):
+for entry_point in pkg_resources.iter_entry_points('config_source.sources'):
     entry_point.load()
