@@ -1,8 +1,8 @@
-config_source
+config-source
 =============
 
-.. image:: https://travis-ci.org/LudditeLabs/config_source.svg?branch=master
-   :target: https://travis-ci.org/LudditeLabs/config_source
+.. image:: https://travis-ci.org/LudditeLabs/config-source.svg?branch=master
+   :target: https://travis-ci.org/LudditeLabs/config-source
 
 This package provides extensible configuration loading from various sources.
 
@@ -18,7 +18,7 @@ Features:
 
 * Custom configuration sources and objects.
 
-Basically ``config_source`` provides a way to register configuration loaders and
+Basically ``config-source`` provides a way to register configuration loaders and
 call them by names. The loader accepts optional arguments, reads configuration
 from a specific source and populates a configuration object.
 
