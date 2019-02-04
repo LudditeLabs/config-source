@@ -46,7 +46,7 @@ setup(
     py_modules=['configsource'],
     install_requires=['future>=0.16.0'],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
