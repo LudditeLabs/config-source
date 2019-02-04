@@ -37,7 +37,7 @@ if PY2:
 
 
 setup(
-    name='config_source',
+    name='config-source',
     version=get_version(),
     description='Simple configurations management for applications.',
     long_description=read('README.rst'),
