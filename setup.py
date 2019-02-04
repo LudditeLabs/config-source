@@ -28,7 +28,7 @@ setup(
     description='Simple configurations management for applications.',
     long_description=read('README.rst'),
     author='Sergey Kozlov',
-    author_email='sergey.kozlov@ludditelabs.io',
+    author_email='dev@ludditelabs.io',
     py_modules=['configsource'],
     install_requires=['future>=0.16.0'],
     classifiers=[
