@@ -1,6 +1,9 @@
 configsource
 ============
 
+.. image:: https://travis-ci.org/LudditeLabs/configsource.svg?branch=master
+   :target: https://travis-ci.org/LudditeLabs/configsource
+
 This package provides extensible configuration loading from various sources.
 
 Features:
