@@ -17,7 +17,7 @@ import os
 import os.path as op
 from types import ModuleType
 from future.moves.collections import UserDict
-from future.utils import PY2, iteritems
+from future.utils import PY2, iteritems, string_types
 import pkg_resources
 import json
 from collections import defaultdict
@@ -206,6 +206,57 @@ class DictConfig(UserDict):
         """
         kwargs = merge_kwargs(kwargs, self._defaults.get(source))
         return load_to(self, source, 'dict', *args, **kwargs)
+
+
+class DictConfigLoader(object):
+    """Loader for the :class:`DictConfig`.
+
+    The loader auto-detects config source name by input configuration type.
+    """
+
+    def __init__(self, config):
+        """Construct loader.
+
+        Args:
+            config: :class:`DictConfig` instance.
+        """
+        self.config = config
+
+    def detect_source(self, config, *args, **kwargs):
+        """Detect config source name by input parameters.
+
+        Args:
+            config: Configuration source (like filename, dict or class).
+            args: Arguments for config source loader.
+            kwargs: Keyword arguments for config source loader.
+
+        Returns:
+            Config source name.
+        """
+        if isinstance(config, string_types):
+            return 'json' if config.endswith('.json') else 'pyfile'
+        elif isinstance(config, dict):
+            return 'dict'
+        else:
+            return 'object'
+
+    def load(self, config, *args, **kwargs):
+        """Load given configuration.
+
+        ``config`` source name is auto-detected by its type:
+
+        * ``json`` is used for filenames with ``.json`` extensions.
+        * ``pyfile`` is used for other filenames.
+        * ``dict`` is used for dictionaries.
+        * ``object`` is used in all other cases.
+
+        Args:
+            config: Configuration source (like filename, dict or class).
+            args: Arguments for config source loader.
+            kwargs: Keyword arguments for config source loader.
+        """
+        source = self.detect_source(config, *args, **kwargs)
+        self.config.load_from(source, config, *args, **kwargs)
 
 
 # -- Default configuration sources.

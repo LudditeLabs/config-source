@@ -27,8 +27,11 @@ from config_source import (
     load_multiple_to,
     merge_kwargs,
     ConfigSourceError,
-    DictConfig
+    DictConfig,
+    DictConfigLoader
 )
+
+# TODO: test 'config_source.sources' entrypoints loading.
 
 
 # Test: config_source() decorator.
@@ -518,3 +521,40 @@ class TestDictConfig(object):
 
         # three won't load because it's lowercase.
         assert config == dict(ONE=1, TWO='hello')
+
+
+# Test: DictConfigLoader class.
+class TestDictConfigLoader(object):
+    # Test: construct DictConfigLoader.
+    def test_construct(self):
+        cfg = DictConfig()
+        loader = DictConfigLoader(cfg)
+
+        assert loader.config is cfg
+
+    class Cfg:
+        pass
+
+    # Test: detect source name by config type.
+    @pytest.mark.parametrize('name,config', [
+        ('pyfile', '/path/to/file.cfg'),
+        ('pyfile', '/path/to/file.py'),
+        ('json', '/path/to/file.json'),
+        ('dict', {}),
+        ('object', object()),
+        ('object', Cfg()),
+        ('object', Cfg),
+    ])
+    def test_detect_source(self, name, config):
+        loader = DictConfigLoader(Mock())
+        source = loader.detect_source(config)
+        assert name == source
+
+    # Test: load configuration.
+    def test_load(self):
+        loader = DictConfigLoader(Mock())
+        loader.load('/path/to/file.py', 1, 2, kw=3)
+
+        assert loader.config.method_calls == [
+            call.load_from('pyfile', '/path/to/file.py', 1, 2, kw=3)
+        ]

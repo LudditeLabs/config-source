@@ -25,11 +25,17 @@ from a specific source and populates a configuration object.
 Example::
 
     from config_source import DictConfig
+    from config_source import DictConfigLoader
 
     config = DictConfig()
     config.load_from('pyfile', '/path/to/config.py')
     config.load_from('json', '/path/to/config.json')
     config.load_from('env', prefix='MYCFG')
+
+    loader = DictConfigLoader(config)
+    loader.load('/path/to/config.py')
+    loader.load('/path/to/config.json')
+    loader.load(SomeClassWithConfigs)
 
 Usage
 -----
@@ -38,6 +44,7 @@ Out of the box you could use:
 
 * Low level ``load_to()`` function.
 * ``DictConfig`` class.
+* ``DictConfigLoader`` class to assist in configurations loading.
 
 
 ``load_to()`` calls a loader registered for a specific source and populates
@@ -136,6 +143,16 @@ configuration object::
   Example::
 
       config.load_from('json', '/path/to/config.json')
+
+``DictConfigLoader`` auto-detects source name from input configuration source::
+
+    loader = DictConfigLoader(config)
+    loader.load('/path/to/file.py')
+
+    # Same as:
+    config.load_from('pyfile', '/path/to/file.py')
+
+You may subclass to extend auto-detection.
 
 Add source
 ----------
