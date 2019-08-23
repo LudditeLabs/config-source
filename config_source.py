@@ -321,9 +321,9 @@ def load_from_env(config, prefix, trim_prefix=True):
 
     for key, value in iteritems(os.environ):
         if key.startswith(prefix):
-            # drop prefix: <prefix>_<name>
+            # Drop prefix: <prefix><name>
             if trim_prefix:
-                key = key[len(prefix) + 1:]
+                key = key[len(prefix):]
             config[key] = value
             has = True
 

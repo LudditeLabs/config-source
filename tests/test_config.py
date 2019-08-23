@@ -313,25 +313,25 @@ class TestDictSources(object):
     # Test: load settings from runtime env, without prefixed vars.
     def test_from_env_empty(self):
         config = dict()
-        res = load_to(config, 'env', 'dict', prefix='MYTEST')
+        res = load_to(config, 'env', 'dict', prefix='MYTEST_')
 
         assert res is False
         assert config == dict()
 
     # Test: load settings from runtime env.
-    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
+    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello', MYTESTX='1')
     def test_from_env(self):
         config = dict()
-        res = load_to(config, 'env', 'dict', prefix='MYTEST')
+        res = load_to(config, 'env', 'dict', prefix='MYTEST_')
 
         assert res is True
         assert config == dict(ONE='12', TWO='hello')
 
     # Test: load settings from runtime env, don't trim prefix.
-    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
+    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello', MYTESTX='1')
     def test_from_env_notrim(self):
         config = dict()
-        load_to(config, 'env', 'dict', prefix='MYTEST', trim_prefix=False)
+        load_to(config, 'env', 'dict', prefix='MYTEST_', trim_prefix=False)
 
         assert config == dict(MYTEST_ONE='12', MYTEST_TWO='hello')
 
@@ -493,10 +493,10 @@ class TestDictConfig(object):
         assert config == dict(PARAM1=1, PARAM_2='2')
 
     # Test: load settings from runtime env.
-    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello')
+    @patch.dict('os.environ', MYTEST_ONE='12', MYTEST_TWO='hello', MYTESTX='1')
     def test_from_env(self):
         config = DictConfig()
-        config.load_from('env', prefix='MYTEST')
+        config.load_from('env', prefix='MYTEST_')
 
         assert config == dict(ONE='12', TWO='hello')
 

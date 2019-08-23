@@ -30,7 +30,7 @@ Example::
     config = DictConfig()
     config.load_from('pyfile', '/path/to/config.py')
     config.load_from('json', '/path/to/config.json')
-    config.load_from('env', prefix='MYCFG')
+    config.load_from('env', prefix='MYCFG_')
 
     loader = DictConfigLoader(config)
     loader.load('/path/to/config.py')
@@ -117,7 +117,7 @@ configuration object::
   Example::
 
       # Load vars with names MYCFG_*, like MYCFG_SECRET.
-      config.load_from('env', prefix='MYCFG')
+      config.load_from('env', prefix='MYCFG_')
 
 * ``pyfile`` - load configuration from a python file. Reads only uppercase
   attributes::
@@ -198,16 +198,16 @@ Instead of always passing parameters to configuration loaders you could set
 defaults in ``DictConfig``::
 
     config = DictConfig(defaults={
-        'env': {'prefix': 'MYAPP'},
+        'env': {'prefix': 'MYAPP_'},
         'pyfile': {'filename': '/path/to/file.py'}
     })
 
-    # 'prefix' will be set to MYAPP for 'env' config source.
+    # 'prefix' will be set to MYAPP_ for 'env' config source.
     # Load from 'MYAPP_*' vars by default.
     config.load_from('env')
 
     # Load from 'MY_*' vars
-    config.load_from('env', 'MY')
+    config.load_from('env', 'MY_')
 
     # Load from '/path/to/file.py' by default.
     config.load_from('pyfile')
