@@ -22,7 +22,7 @@ import pkg_resources
 import json
 from collections import defaultdict
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 # Configuration sources registry.
 _config_sources = defaultdict(dict)
