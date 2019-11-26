@@ -249,7 +249,7 @@ class TestLoadMultipleTo(object):
             config['src2'] = param
             return True
 
-        @config_source('src2', 'xxx')
+        @config_source('src2', 'xxx')  # noqa: F811
         def loader_2(config, param=None):
             config['src2_xxx'] = param
             return True
