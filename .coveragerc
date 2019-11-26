@@ -1,6 +1,7 @@
 [run]
-source = config_source
+source = src/
 branch = true
+omit = tests/*
 
 [report]
 show_missing = true

@@ -30,7 +30,6 @@ _config_sources = defaultdict(dict)
 
 class ConfigSourceError(Exception):
     """Configuration source error."""
-    pass
 
 
 def config_source(source, config_type='dict', force=False):
@@ -181,6 +180,7 @@ class DictConfig(UserDict):
             for config sources. They merge with those that will be passed to
             :meth:`load_from`.
     """
+
     def __init__(self, defaults=None):
         # UserDict in py 2.X is old-style class so we can't use super().
         if PY2:  # pragma: no cover
@@ -363,8 +363,7 @@ def strip_type_prefix(path, prefix):
 
 @config_source('pyfile')
 def load_from_pyfile(config, source, silent=False):
-    """Update ``config`` with values from the given python file or file-like
-    object.
+    """Update ``config`` with values from the python file or file-like object.
 
     Args:
         config: Dict-like config.
@@ -422,5 +421,5 @@ def load_from_json(config, filename, silent=False):
 
 # -- Configuration sources from plugins.
 
-for entry_point in pkg_resources.iter_entry_points('config_source.sources'):  # pragma: nocover
+for entry_point in pkg_resources.iter_entry_points('config_source.sources'):  # noqa pragma: nocover
     entry_point.load()

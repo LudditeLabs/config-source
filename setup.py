@@ -14,20 +14,21 @@
 
 import sys
 import os.path as op
-from setuptools import setup
+from setuptools import setup, find_packages
 
 PY2 = sys.version_info[0] == 2
+THIS_DIR = op.dirname(__file__)
 
 
 def get_version():
-    with open('config_source.py') as f:
+    with open(op.join(THIS_DIR, 'src/config_source.py')) as f:
         for line in f:
             if line.startswith('__version__'):
                 return eval(line.split('=')[-1])
 
 
 def read(filename):
-    return open(op.join(op.dirname(__file__), filename)).read()
+    return open(op.join(THIS_DIR, filename)).read()
 
 
 tests_require = ['pytest', 'pytest-cov']
@@ -43,6 +44,8 @@ setup(
     long_description=read('README.rst'),
     author='Sergey Kozlov',
     author_email='dev@ludditelabs.io',
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     py_modules=['config_source'],
     install_requires=['future>=0.16.0'],
     classifiers=[
