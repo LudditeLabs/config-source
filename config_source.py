@@ -234,6 +234,12 @@ class DictConfigLoader(object):
             Config source name.
         """
         if isinstance(config, string_types):
+            parts = config.split('://')
+            if len(parts) == 2:
+                name = parts[0].strip()
+                if not name:
+                    raise ValueError('Invalid source: %s' % config)
+                return name
             return 'json' if config.endswith('.json') else 'pyfile'
         elif isinstance(config, dict):
             return 'dict'
@@ -330,6 +336,31 @@ def load_from_env(config, prefix, trim_prefix=True):
     return has
 
 
+def strip_type_prefix(path, prefix):
+    """Strip source type prefix from the path.
+
+    This function strips prefix from strings like::
+
+        [<prefix>]://<path>
+
+    For example::
+
+        pyfile://home/me/config.py -> /home/me/config.py
+        json://path/to/some.cfg -> /path/to/some.cfg
+
+    Args:
+        path: Path string.
+        prefix: Prefix to strip.
+
+    Returns:
+        Path string.
+    """
+    path = path.lstrip()
+    if path.startswith(prefix + '://'):
+        path = path[len(prefix) + 2:]
+    return path
+
+
 @config_source('pyfile')
 def load_from_pyfile(config, source, silent=False):
     """Update ``config`` with values from the given python file or file-like
@@ -353,6 +384,7 @@ def load_from_pyfile(config, source, silent=False):
     else:
         d.__file__ = source
 
+        source = strip_type_prefix(source, 'pyfile')
         if not op.exists(source):
             if not silent:
                 raise IOError('File is not found: %s' % source)
@@ -376,6 +408,7 @@ def load_from_json(config, filename, silent=False):
     Returns:
         ``True`` if at least one variable from the file is loaded.
     """
+    filename = strip_type_prefix(filename, 'json')
     if not op.exists(filename):
         if not silent:
             raise IOError('File is not found: %s' % filename)
@@ -389,5 +422,5 @@ def load_from_json(config, filename, silent=False):
 
 # -- Configuration sources from plugins.
 
-for entry_point in pkg_resources.iter_entry_points('config_source.sources'):
+for entry_point in pkg_resources.iter_entry_points('config_source.sources'):  # pragma: nocover
     entry_point.load()

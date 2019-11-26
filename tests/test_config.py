@@ -26,12 +26,24 @@ from config_source import (
     load_to,
     load_multiple_to,
     merge_kwargs,
+    strip_type_prefix,
     ConfigSourceError,
     DictConfig,
     DictConfigLoader
 )
 
 # TODO: test 'config_source.sources' entrypoints loading.
+
+
+# Test: strip_type_prefix().
+@pytest.mark.parametrize('path,prefix,result', [
+    ('file://path/to/file.json', 'file', '/path/to/file.json'),
+    ('file:/path/to/file.json', 'file', 'file:/path/to/file.json'),
+    ('file://path/to/file.json', 'json', 'file://path/to/file.json'),
+    ('/path/to/file.json', 'json', '/path/to/file.json')
+])
+def test_strip_type_prefix(path, prefix, result):
+    assert strip_type_prefix(path, prefix) == result
 
 
 # Test: config_source() decorator.
@@ -358,6 +370,19 @@ class TestDictSources(object):
         # three won't load because it's lowercase.
         assert config == dict(ONE=1, TWO='hello')
 
+    # Test: load settings from a python file specified with prefix.
+    def test_from_pyfile_prefix(self, tmpdir):
+        myconfig = tmpdir.join('myconfig.py')
+        myconfig.write('ONE = 1\nTWO = "hello"\nthree = 3')
+
+        config = dict()
+        filename = 'pyfile:/%s' % myconfig
+        res = load_to(config, 'pyfile', 'dict', filename)
+
+        assert res is True
+        # three won't load because it's lowercase.
+        assert config == dict(ONE=1, TWO='hello')
+
     # Test: load settings from a missing python file, silent mode.
     def test_from_pyfile_missing_silent(self, tmpdir):
         filename = str(tmpdir.join('myconfig.py'))
@@ -382,6 +407,19 @@ class TestDictSources(object):
 
         config = DictConfig()
         res = config.load_from('json', str(myconfig))
+
+        assert res is True
+        # three won't load because it's lowercase.
+        assert config == dict(ONE=1, TWO='hello')
+
+    # Test: load settings from a json file specified with prefix.
+    def test_from_json_prefix(self, tmpdir):
+        myconfig = tmpdir.join('myconfig.cfg')
+        myconfig.write('{"ONE": 1, "TWO": "hello", "three": 3}')
+
+        config = DictConfig()
+        filename = 'json:/%s' % myconfig
+        res = config.load_from('json', filename)
 
         assert res is True
         # three won't load because it's lowercase.
@@ -540,6 +578,9 @@ class TestDictConfigLoader(object):
         ('pyfile', '/path/to/file.cfg'),
         ('pyfile', '/path/to/file.py'),
         ('json', '/path/to/file.json'),
+        ('s3', 's3://path/to/file.json'),
+        ('json', 'json://path/to/file.json'),
+        ('file', 'file://path/to/file.json'),
         ('dict', {}),
         ('object', object()),
         ('object', Cfg()),
@@ -549,6 +590,17 @@ class TestDictConfigLoader(object):
         loader = DictConfigLoader(Mock())
         source = loader.detect_source(config)
         assert name == source
+
+    # Test: detect source name by config type.
+    @pytest.mark.parametrize('config', [
+        '://path/to/file.json',
+        '   ://path/to/file',
+    ])
+    def test_detect_source_invalid(self, config):
+        with pytest.raises(ValueError) as e:
+            loader = DictConfigLoader(Mock())
+            loader.detect_source(config)
+        assert str(e.value) == 'Invalid source: %s' % config
 
     # Test: load configuration.
     def test_load(self):
